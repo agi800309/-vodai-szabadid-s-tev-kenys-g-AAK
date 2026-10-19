@@ -123,7 +123,7 @@
 
         .sentence-strip {
             flex: 1;
-            min-height: 92px;
+            min-height: 85px;
             background: #f8fafc;
             border: 3px dashed #94a3b8;
             border-radius: 20px;
@@ -138,31 +138,31 @@
         .strip-empty {
             color: #64748b;
             font-weight: 800;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .strip-card {
             border-radius: 16px;
             border-width: 3px;
             border-style: solid;
-            padding: 6px 12px;
+            padding: 4px 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
             font-weight: 900;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .strip-card-emoji {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             line-height: 1;
         }
 
         .strip-card-img {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             object-fit: cover;
         }
 
@@ -175,8 +175,8 @@
         .btn-speak {
             background: #16a34a;
             color: #ffffff;
-            font-size: 1.05rem;
-            padding: 18px 20px;
+            font-size: 1rem;
+            padding: 16px 18px;
             border-radius: 18px;
             box-shadow: 0 4px 0 #15803d;
         }
@@ -184,8 +184,8 @@
         .btn-clear {
             background: #e11d48;
             color: #ffffff;
-            font-size: 1rem;
-            padding: 18px 14px;
+            font-size: 0.95rem;
+            padding: 16px 12px;
             border-radius: 18px;
         }
 
@@ -219,7 +219,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
-        /* ÓRIÁS KÁRTYARÁCS */
+        /* ÓRIÁS KÁRTYARÁCS – SZIGORÚ KERETBE ZÁRVA */
         .grid-wrapper {
             padding: 12px 14px 40px 14px;
             flex: 1;
@@ -227,22 +227,22 @@
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
             gap: 16px;
         }
 
         @media (min-width: 700px) {
             .cards-grid {
-                grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             }
         }
 
         .aac-card {
-            border-radius: 26px;
+            border-radius: 24px;
             border-width: 5px;
             border-style: solid;
-            padding: 16px 12px;
-            min-height: 200px;
+            padding: 10px;
+            height: 195px; /* Fix magasság, hogy ne csússzon szét semmi */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -251,6 +251,7 @@
             cursor: pointer;
             position: relative;
             box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            overflow: hidden; /* BIZTOSÍTÉK: semmi sem lóghat ki a kártya keretén kívülre */
             transition: transform 0.12s ease;
         }
 
@@ -265,32 +266,44 @@
         .word-red    { background-color: var(--red-bg);    border-color: var(--red-border);    color: var(--red-text); }
 
         .card-visual {
-            height: 110px;
+            width: 100%;
+            height: 110px; /* Fix max magasság a grafikának */
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 4px 0;
+            overflow: hidden;
         }
 
         .card-emoji {
-            font-size: 5.4rem;
+            font-size: 3.8rem; /* Kisebb méretre vettem, hogy garantáltan beleférjen */
             line-height: 1;
         }
 
         .card-image {
-            width: 110px;
-            height: 110px;
-            border-radius: 20px;
-            object-fit: cover;
-            border: 3px solid rgba(0,0,0,0.15);
+            max-width: 100%;
+            max-height: 110px;
+            width: auto;
+            height: auto;
+            border-radius: 14px;
+            object-fit: contain;
+            border: 2px solid rgba(0,0,0,0.15);
             background: #ffffff;
         }
 
+        /* NAGYON DISZKRÉT, KICSI SZÖVEG A GYERMEKNEK / FELNŐTTNEK */
         .card-title {
-            font-size: 1.15rem;
-            font-weight: 900;
-            line-height: 1.25;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1.1;
             text-transform: uppercase;
+            opacity: 0.75;
+            background: rgba(255,255,255,0.5);
+            padding: 2px 4px;
+            border-radius: 6px;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         /* Kártyán belüli szerkesztőgombok */
@@ -299,7 +312,7 @@
             width: 100%;
             justify-content: space-between;
             gap: 4px;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
         }
 
         .unlocked-mode .card-edit-tools {
@@ -308,14 +321,14 @@
 
         .tool-btn {
             border: none;
-            border-radius: 8px;
-            padding: 5px 8px;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 2px 5px;
+            font-size: 0.68rem;
             font-weight: 900;
             cursor: pointer;
             background: #ffffff;
             color: #0f172a;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
 
         /* MODÁLIS ABLAKOK */
@@ -386,7 +399,7 @@
             <div>
                 <h1 class="header-title">Játsszunk Együtt! – Szabadjáték AAK Tábla</h1>
                 <div style="font-size:0.75rem; color:#bae6fd; font-weight:700;">
-                    Egyszerűsített, óvodásbarát kommunikációs felület
+                    Óvodásbarát, tökéletesen keretezett vizuális felület
                 </div>
             </div>
         </div>
@@ -426,7 +439,7 @@
         </div>
         <div class="strip-buttons">
             <button onclick="speakStrip()" class="btn btn-speak">🔊 KIMONDÁS</button>
-            <button onclick="popStrip()" class="btn" style="background:#f59e0b; color:#0f172a; padding:18px 14px; border-radius:18px;">⌫</button>
+            <button onclick="popStrip()" class="btn" style="background:#f59e0b; color:#0f172a; padding:16px 12px; border-radius:18px;">⌫</button>
             <button onclick="clearStrip()" class="btn btn-clear">🗑️</button>
         </div>
     </section>
@@ -477,7 +490,7 @@
 
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
                 <div class="field">
-                    <label>2. Kártya felirata:</label>
+                    <label>2. Kártya felirata (diszkrét segítség felnőttnek):</label>
                     <input id="f-label" type="text" placeholder="Pl. ADD KÖLCSÖN!">
                 </div>
                 <div class="field">
@@ -495,7 +508,7 @@
             </div>
 
             <div class="field" style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid #cbd5e1;">
-                <label>5. Saját kép feltöltése:</label>
+                <label>5. Saját kép feltöltése (kereten belül marad):</label>
                 <input id="f-img" type="file" accept="image/*" onchange="handleModalImage(event)">
                 <button onclick="clearModalImage()" class="tool-btn" style="margin-top:6px; background:#ffe4e6; color:#e11d48;">✕ Kép törlése</button>
             </div>
@@ -611,7 +624,7 @@
         let recorder = null;
         let recChunks = [];
 
-        function compressImg(file, maxW = 240, qual = 0.8) {
+        function compressImg(file, maxW = 200, qual = 0.8) {
             return new Promise(res => {
                 const r = new FileReader();
                 r.onload = e => {
@@ -955,12 +968,12 @@
         }
 
         function saveLocal() {
-            try { localStorage.setItem('aak_szabadjatek_v3', JSON.stringify(state)); } catch (e) {}
+            try { localStorage.setItem('aak_szabadjatek_v5', JSON.stringify(state)); } catch (e) {}
         }
 
         function loadLocal() {
             try {
-                const raw = localStorage.getItem('aak_szabadjatek_v3');
+                const raw = localStorage.getItem('aak_szabadjatek_v5');
                 if (raw) {
                     const p = JSON.parse(raw);
                     if (p && p.cards) { state = p; return; }

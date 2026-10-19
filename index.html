@@ -18,6 +18,12 @@
             --red-bg: #fecdd3;    --red-border: #e11d48;    --red-text: #4c0519;
         }
 
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         * {
             box-sizing: border-box;
             user-select: none;
@@ -26,14 +32,12 @@
         }
 
         body {
-            margin: 0;
-            padding: 0;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
             background-color: var(--bg-page);
             color: var(--text-main);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         /* FEJLÉC */
@@ -46,6 +50,7 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         .header-left {
@@ -101,6 +106,7 @@
             gap: 10px;
             align-items: center;
             justify-content: space-between;
+            flex-shrink: 0;
         }
 
         .admin-bar.open {
@@ -115,9 +121,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            position: sticky;
-            top: 0;
-            z-index: 30;
+            flex-shrink: 0;
             box-shadow: 0 4px 12px rgba(0,0,0,0.07);
         }
 
@@ -195,6 +199,7 @@
             gap: 8px;
             padding: 12px 14px 4px 14px;
             overflow-x: auto;
+            flex-shrink: 0;
         }
 
         .tab-btn {
@@ -219,10 +224,11 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
-        /* ÓRIÁS KÁRTYARÁCS – SZIGORÚ KERETBE ZÁRVA */
+        /* ÓRIÁS KÁRTYARÁCS – GÖRGETETHETŐ TARTALOM */
         .grid-wrapper {
             padding: 12px 14px 40px 14px;
             flex: 1;
+            overflow-y: auto;
         }
 
         .cards-grid {
@@ -242,7 +248,7 @@
             border-width: 5px;
             border-style: solid;
             padding: 10px;
-            height: 195px; /* Fix magasság, hogy ne csússzon szét semmi */
+            height: 195px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -251,7 +257,7 @@
             cursor: pointer;
             position: relative;
             box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-            overflow: hidden; /* BIZTOSÍTÉK: semmi sem lóghat ki a kártya keretén kívülre */
+            overflow: hidden;
             transition: transform 0.12s ease;
         }
 
@@ -267,7 +273,7 @@
 
         .card-visual {
             width: 100%;
-            height: 110px; /* Fix max magasság a grafikának */
+            height: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -275,7 +281,7 @@
         }
 
         .card-emoji {
-            font-size: 3.8rem; /* Kisebb méretre vettem, hogy garantáltan beleférjen */
+            font-size: 3.8rem;
             line-height: 1;
         }
 
@@ -290,7 +296,6 @@
             background: #ffffff;
         }
 
-        /* NAGYON DISZKRÉT, KICSI SZÖVEG A GYERMEKNEK / FELNŐTTNEK */
         .card-title {
             font-size: 0.72rem;
             font-weight: 800;
@@ -306,7 +311,6 @@
             white-space: nowrap;
         }
 
-        /* Kártyán belüli szerkesztőgombok */
         .card-edit-tools {
             display: none;
             width: 100%;
@@ -624,7 +628,7 @@
         let recorder = null;
         let recChunks = [];
 
-        function compressImg(file, maxW = 200, qual = 0.8) {
+        function compressImg(file, maxW = 180, qual = 0.8) {
             return new Promise(res => {
                 const r = new FileReader();
                 r.onload = e => {
@@ -968,12 +972,12 @@
         }
 
         function saveLocal() {
-            try { localStorage.setItem('aak_szabadjatek_v5', JSON.stringify(state)); } catch (e) {}
+            try { localStorage.setItem('aak_szabadjatek_v6', JSON.stringify(state)); } catch (e) {}
         }
 
         function loadLocal() {
             try {
-                const raw = localStorage.getItem('aak_szabadjatek_v5');
+                const raw = localStorage.getItem('aak_szabadjatek_v6');
                 if (raw) {
                     const p = JSON.parse(raw);
                     if (p && p.cards) { state = p; return; }
@@ -985,6 +989,7 @@
         }
 
         window.onload = () => {
+            loadCol = null; // init
             loadLocal();
             renderTabs();
             renderGrid();

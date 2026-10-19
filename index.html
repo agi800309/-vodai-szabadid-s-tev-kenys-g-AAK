@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Szabadjáték AAK Kommunikátor – Óvoda és Otthon</title>
+    <style>
+        /* 100% OFFLINE STÍLUSLAP - SZÓFAJI SZÍNKÓDOLÁSSAL ÉS ÓRIÁS KÁRTYÁKKAL */
+        :root {
+            --bg-page: #f1f5f9;
+            --header-bg: #0f2942;
+            --text-main: #0f172a;
+
+            /* AAK SZÓFAJI SZÍNKÓDOK (FitzGerald-kulcs és Bliss szabvány) */
+            /* 1. SÁRGA: Személyek / Névmások (Ki? Kivel?) */
+            --yellow-bg: #fef08a; --yellow-border: #ca8a04; --yellow-text: #422006;
+            /* 2. ZÖLD: Igék / Cselekvések (Mit csinál?) */
+            --green-bg: #bbf7d0;  --green-border: #16a34a;  --green-text: #052e16;
+            /* 3. NARANCS: Főnevek / Játékok (Mivel?) */
+            --orange-bg: #fed7aa; --orange-border: #ea580c; --orange-text: #431407;
+            /* 4. KÉK: Érzelmek / Állapotok / Jelzők (Milyen? Hogy érzi magát?) */
+            --blue-bg: #bae6fd;   --blue-border: #0284c7;   --blue-text: #082f49;
+            /* 5. PIROS-RÓZSASZÍN: Társas szabályok, határhúzás, Igen/Nem/Vége */
+            --red-bg: #fecdd3;    --red-border: #e11d48;    --red-text: #4c0519;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* FEJLÉC */
+        .header {
+            background-color: var(--header-bg);
+            color: #ffffff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 14px;
+            padding: 9px 14px;
+            font-weight: 900;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.94);
+        }
+
+        .btn-lock {
+            background: #334155;
+            color: #ffffff;
+            border: 2px solid #64748b;
+        }
+
+        .btn-lock.unlocked {
+            background: #facc15;
+            color: #0f172a;
+            border-color: #ffffff;
+        }
+
+        /* FELNŐTT SZERKESZTŐ SÁV (GYERMEK ELŐL REJTVE) */
+        .admin-bar {
+            display: none;
+            background: #fef9c3;
+            border-bottom: 3px solid #ca8a04;
+            padding: 12px 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .admin-bar.open {
+            display: flex;
+        }
+
+        /* MONDATÉPÍTŐ ÉS KIMONDÓ SÁV */
+        .sentence-area {
+            background: #ffffff;
+            border-bottom: 3px solid #cbd5e1;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+        }
+
+        .sentence-strip {
+            flex: 1;
+            min-height: 92px;
+            background: #f8fafc;
+            border: 3px dashed #94a3b8;
+            border-radius: 20px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            cursor: pointer;
+        }
+
+        .strip-empty {
+            color: #64748b;
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .strip-card {
+            border-radius: 16px;
+            border-width: 3px;
+            border-style: solid;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            font-weight: 900;
+            font-size: 0.95rem;
+        }
+
+        .strip-card-emoji {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+
+        .strip-card-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .strip-buttons {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-speak {
+            background: #16a34a;
+            color: #ffffff;
+            font-size: 1.05rem;
+            padding: 18px 20px;
+            border-radius: 18px;
+            box-shadow: 0 4px 0 #15803d;
+        }
+
+        .btn-clear {
+            background: #e11d48;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 18px 14px;
+            border-radius: 18px;
+        }
+
+        /* SZÓFAJI ÉS HELYZETI KATEGÓRIA FÜLEK */
+        .tabs-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px 4px 14px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            border: 3px solid rgba(0,0,0,0.15);
+            border-radius: 18px;
+            padding: 10px 16px;
+            font-weight: 900;
+            font-size: 0.92rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        .tab-btn.active {
+            border-color: #0f172a;
+            border-width: 4px;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* ÓRIÁS KÁRTYARÁCS ÓVODÁSOKNAK */
+        .grid-wrapper {
+            padding: 12px 14px 40px 14px;
+            flex: 1;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 16px;
+        }
+
+        @media (min-width: 700px) {
+            .cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            }
+        }
+
+        .aac-card {
+            border-radius: 26px;
+            border-width: 5px;
+            border-style: solid;
+            padding: 14px 12px;
+            min-height: 225px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            transition: transform 0.12s ease;
+        }
+
+        .aac-card:active {
+            transform: scale(0.95);
+        }
+
+        /* Szófaji színkód osztályok */
+        .word-yellow { background-color: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-text); }
+        .word-green  { background-color: var(--green-bg);  border-color: var(--green-border);  color: var(--green-text); }
+        .word-orange { background-color: var(--orange-bg); border-color: var(--orange-border); color: var(--orange-text); }
+        .word-blue   { background-color: var(--blue-bg);   border-color: var(--blue-border);   color: var(--blue-text); }
+        .word-red    { background-color: var(--red-bg);    border-color: var(--red-border);    color: var(--red-text); }
+
+        .word-type-tag {
+            font-size: 0.68rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 8px;
+            border-radius: 999px;
+            letter-spacing: 0.4px;
+        }
+
+        .card-visual {
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 6px 0;
+        }
+
+        .card-emoji {
+            font-size: 5.2rem;
+            line-height: 1;
+        }
+
+        .card-image {
+            width: 108px;
+            height: 108px;
+            border-radius: 20px;
+            object-fit: cover;
+            border: 3px solid rgba(0,0,0,0.15);
+            background: #ffffff;
+        }
+
+        .card-title {
+            font-size: 1.12rem;
+            font-weight: 900;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        .card-minta {
+            font-size: 0.74rem;
+            font-weight: 800;
+            background: rgba(255,255,255,0.82);
+            color: #1e293b;
+            padding: 4px 8px;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        /* Kártyán belüli szerkesztőgombok (Csak Felnőtt módban látszanak) */
+        .card-edit-tools {
+            display: none;
+            width: 100%;
+            justify-content: space-between;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .unlocked-mode .card-edit-tools {
+            display: flex;
+        }
+
+        .tool-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            cursor: pointer;
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        /* MODÁLIS ABLAKOK */
+        .modal-bg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.75);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-bg.open {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            max-width: 580px;
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 20px;
+            border: 4px solid #0f2942;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            border: 2px solid #cbd5e1;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .alert-box {
+            background: #fff1f2;
+            border: 2px solid #e11d48;
+            color: #881337;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- FEJLÉC -->
+    <header class="header">
+        <div class="header-left">
+            <span style="font-size:2rem;">🧸🗣️</span>
+            <div>
+                <h1 class="header-title">Játsszunk Együtt! – Szabadjáték AAK Tábla</h1>
+                <div style="font-size:0.75rem; color:#bae6fd; font-weight:700;">
+                    Szófaji színkódolású óvodai és otthoni kommunikátor
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+            <button id="lock-btn" onclick="toggleAdminLock()" class="btn btn-lock">
+                <span id="lock-icon">🔒</span>
+                <span id="lock-label">Felnőtt mód (PIN: 1234)</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- FELNŐTT SZERKESZTŐ SÁV -->
+    <section id="admin-bar" class="admin-bar">
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <strong style="font-size:0.82rem; color:#713f12;">🔓 FELNŐTT BEÁLLÍTÁSOK:</strong>
+            <button onclick="openEditModal(null)" class="btn" style="background:#16a34a; color:white;">➕ Új kártya / Mondat</button>
+            <label class="btn" style="background:#0284c7; color:white; cursor:pointer;">
+                📂 Tömeges képfeltöltés
+                <input type="file" accept="image/*" multiple style="display:none;" onchange="bulkUploadImages(event)">
+            </label>
+            <button onclick="openVoiceModal()" class="btn" style="background:#7c3aed; color:white;">🔊 Hangtípus (Felnőtt / Gyermek / Robot)</button>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <button onclick="downloadCompleteOfflineHtml()" class="btn" style="background:#0f172a; color:#fde047; border:2px solid #ca8a04;" title="Ez a gomb letölt egy új index.html fájlt, amiben minden saját képed és hangod benne van!">
+                📦 Kész oldal mentése (index.html GitHubra / Szülőnek)
+            </button>
+            <button onclick="resetToDefault()" class="btn" style="background:#ffffff; color:#dc2626; border:1px solid #dc2626;">↺ Gyári alap</button>
+        </div>
+    </section>
+
+    <!-- MONDATÉPÍTŐ ÉS HANGOS KIMONDÓ SÁV -->
+    <section class="sentence-area">
+        <div id="sentence-strip" class="sentence-strip" onclick="speakStrip()">
+            <span class="strip-empty">👆 Érintsd meg a kártyákat! (Sárga = Ki? ➔ Zöld = Mit csinál? ➔ Narancs = Mivel?)</span>
+        </div>
+        <div class="strip-buttons">
+            <button onclick="speakStrip()" class="btn btn-speak">🔊 KIMONDÁS</button>
+            <button onclick="popStrip()" class="btn" style="background:#f59e0b; color:#0f172a; padding:18px 14px; border-radius:18px;">⌫</button>
+            <button onclick="clearStrip()" class="btn btn-clear">🗑️</button>
+        </div>
+    </section>
+
+    <!-- SZÓFAJI ÉS SZITUÁCIÓS FÜLEK -->
+    <nav id="tabs-bar" class="tabs-bar"></nav>
+
+    <!-- ÓRIÁS KÁRTYÁK RÁCSA -->
+    <main id="grid-wrapper" class="grid-wrapper">
+        <div id="cards-grid" class="cards-grid"></div>
+    </main>
+
+    <!-- MODAL 1: PIN ZÁR -->
+    <div id="pin-modal" class="modal-bg">
+        <div class="modal-card" style="max-width:360px; text-align:center;">
+            <h3 style="margin-top:0; font-weight:900;">🔒 Felnőtt Mód Feloldása</h3>
+            <p style="font-size:0.85rem; color:#475569; font-weight:700;">Írd be a PIN-kódot (alapértelmezett: <strong>1234</strong>):</p>
+            <input id="pin-input" type="password" inputmode="numeric" placeholder="1234" style="width:100%; padding:10px; font-size:1.4rem; text-align:center; border-radius:12px; border:2px solid #94a3b8; margin-bottom:14px;">
+            <div style="display:flex; gap:8px; justify-content:center;">
+                <button onclick="closeModal('pin-modal')" class="btn" style="background:#e2e8f0;">Mégsem</button>
+                <button onclick="checkPin()" class="btn" style="background:#16a34a; color:white;">🔓 Belépés</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: KÁRTYA SZERKESZTÉSE / HOZZÁADÁSA -->
+    <div id="edit-modal" class="modal-bg">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 id="edit-modal-title" style="margin:0; font-weight:900;">✏️ Kártya Szerkesztése</h3>
+                <button onclick="closeModal('edit-modal')" class="btn" style="background:#ffe4e6; color:#e11d48; padding:6px 10px;">✕</button>
+            </div>
+
+            <div class="alert-box">
+                ⚠️ SZAKMAI FIGYELMEZTETÉS: A szerkesztő felelőssége, hogy a feltöltött kép/szimbólum és a rámondott szöveg tartalmilag 100%-ban szinkronban legyen egymással!
+            </div>
+
+            <div class="field">
+                <label>1. Szófaj és Színkód (Az AAK szabályai szerint):</label>
+                <select id="f-color">
+                    <option value="yellow">🟡 SÁRGA – Személyek / Névmások (Én, Te, Veled, Egyedül)</option>
+                    <option value="green">🟢 ZÖLD – Igék / Cselekvések (Játszom, Kérek, Add kölcsön, Segíts)</option>
+                    <option value="orange">🟠 NARANCS – Főnevek / Konkrét Játékok (Kisautó, Kocka, Labda, Hinta)</option>
+                    <option value="blue">🔵 KÉK – Érzelmek / Állapotok (Örülök, Mérges vagyok, Elfáradtam)</option>
+                    <option value="red">🔴 PIROS / RÓZSASZÍN – Társas határok, Tiltás, Igen/Nem/Vége</option>
+                </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                <div class="field">
+                    <label>2. Kártya nagybetűs felirata:</label>
+                    <input id="f-label" type="text" placeholder="Pl. ADD KÖLCSÖN!">
+                </div>
+                <div class="field">
+                    <label>3. Nagy Emoji:</label>
+                    <input id="f-icon" type="text" placeholder="🤲🧸">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>4. Hangosan kimondott magyar szöveg (Élőszavas beszéd):</label>
+                <div style="display:flex; gap:8px;">
+                    <input id="f-spoken" type="text" placeholder="Pl. Kérlek szépen, add kölcsön a játékot!">
+                    <button onclick="testModalSpeech()" class="btn" style="background:#0284c7; color:white;">🔊 Próba</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>5. Rövid viselkedési minta a kártya alján:</label>
+                <input id="f-minta" type="text" placeholder="Pl. Nem vesszük el, szépen elkérjük!">
+            </div>
+
+            <div class="field" style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid #cbd5e1;">
+                <label>6. Saját kép feltöltése (óvodás fotó vagy piktogram):</label>
+                <input id="f-img" type="file" accept="image/*" onchange="handleModalImage(event)">
+                <button onclick="clearModalImage()" class="tool-btn" style="margin-top:6px; background:#ffe4e6; color:#e11d48;">✕ Kép törlése</button>
+            </div>
+
+            <div class="field" style="background:#fef3c7; padding:10px; border-radius:12px; border:1px solid #ca8a04;">
+                <label>7. Saját élő hang felvétele (felülírja a gépi hangot):</label>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+                    <button id="rec-btn" onclick="toggleRecording()" class="btn" style="background:#e11d48; color:white;">🔴 Felvétel indítása</button>
+                    <label class="btn" style="background:#ffffff; border:1px solid #94a3b8; cursor:pointer;">
+                        📂 Hangfájl (MP3/WAV)
+                        <input type="file" accept="audio/*" style="display:none;" onchange="handleModalAudioFile(event)">
+                    </label>
+                    <button id="play-rec-btn" onclick="playTempAudio()" class="btn" style="display:none; background:#16a34a; color:white;">▶️ Lejátszás</button>
+                    <button id="del-rec-btn" onclick="clearTempAudio()" class="btn" style="display:none; background:#ffffff; color:#dc2626;">🗑️ Törlés</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button onclick="closeModal('edit-modal')" class="btn" style="background:#e2e8f0;">Mégsem</button>
+                <button onclick="saveCard()" class="btn" style="background:#16a34a; color:white;">✔ Kártya mentése</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: MAGYAR GÉPI HANG BEÁLLÍTÁSA -->
+    <div id="voice-modal" class="modal-bg">
+        <div class="modal-card" style="max-width:440px;">
+            <h3 style="margin-top:0; font-weight:900;">🔊 Magyar Beszédhang Karakterisztika</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+                <button onclick="setVoicePreset(0.95, 1.0)" class="btn" style="background:#e0f2fe; justify-content:center;">👩 Kedves Felnőtt</button>
+                <button onclick="setVoicePreset(1.0, 1.35)" class="btn" style="background:#fef9c3; justify-content:center;">🧒 Gyermekhang</button>
+                <button onclick="setVoicePreset(0.85, 0.75)" class="btn" style="background:#dcfce7; justify-content:center;">🧔 Mély Hang</button>
+                <button onclick="setVoicePreset(0.8, 0.5)" class="btn" style="background:#f3e8ff; justify-content:center;">🤖 Robothang</button>
+            </div>
+            <div class="field">
+                <label>Beszédtempó: <span id="v-rate-txt">0.95</span>x</label>
+                <input id="v-rate" type="range" min="0.6" max="1.4" step="0.05" value="0.95" oninput="updateVoiceParams()">
+            </div>
+            <div class="field">
+                <label>Hangmagasság: <span id="v-pitch-txt">1.00</span></label>
+                <input id="v-pitch" type="range" min="0.5" max="1.6" step="0.05" value="1.00" oninput="updateVoiceParams()">
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+                <button onclick="closeModal('voice-modal')" class="btn" style="background:#16a34a; color:white;">✔ Kész</button>
+            </div>
+        </div>
+    </div>
+
+    <script id="app-data-script">
+        // BEÉGETETT ALAPADATOK (A letöltőgomb ezt írja felül, így minden eszközön azonos lesz!)
+        const BAKED_STATE = null;
+    </script>
+
+    <script>
+        const TABS = [
+            { id: 'all',    name: 'Összes kártya', icon: '📋' },
+            { id: 'red',    name: 'Játékvita & Határok (Piros)', icon: '🛑' },
+            { id: 'yellow', name: 'Ki? Kivel? (Sárga - Névmás)', icon: '🟡' },
+            { id: 'green',  name: 'Mit csinál? (Zöld - Ige)', icon: '🟢' },
+            { id: 'orange', name: 'Játékok (Narancs - Főnév)', icon: '🟠' },
+            { id: 'blue',   name: 'Érzések (Kék - Állapot)', icon: '🔵' }
+        ];
+
+        const wordTypeNames = {
+            yellow: 'Személy / Névmás',
+            green:  'Ige / Cselekvés',
+            orange: 'Főnév / Játék',
+            blue:   'Érzelem / Állapot',
+            red:    'Társas szabály / Határ'
+        };
+
+        const DEFAULT_CARDS = [
+            // --- SÁRGA: SZEMÉLYEK / KIVEL JÁTSZOM? ---
+            { id: 'y1', color: 'yellow', label: 'ÉN', spoken: 'Én', icon: '🙋', minta: 'Mutass magadra!', imageUrl: null, audioUrl: null },
+            { id: 'y2', color: 'yellow', label: 'VELED SZERETNÉK JÁTSZANI', spoken: 'Szia! Gyere, most veled szeretnék játszani!', icon: '👦🤝👧', minta: 'Barátságosan odahívjuk a társunkat.', imageUrl: null, audioUrl: null },
+            { id: 'y3', color: 'yellow', label: 'TÁRSASÁGBAN JÁTSZANÉK', spoken: 'A többiekkel együtt, társaságban szeretnék játszani!', icon: '👨‍👩‍👧‍👦🎈', minta: 'Csatlakozunk a közös játékhoz.', imageUrl: null, audioUrl: null },
+            { id: 'y4', color: 'yellow', label: 'EGYEDÜL JÁTSZANÉK', spoken: 'Most egyedül, nyugodtan szeretnék játszani.', icon: '🧘‍♂️🧩', minta: 'Jogom van csendben egyedül játszani.', imageUrl: null, audioUrl: null },
+
+            // --- ZÖLD: IGÉK / CSELEKVÉSEK SZABADJÁTÉKBAN ---
+            { id: 'g1', color: 'green', label: 'SZERETNÉK EZZEL JÁTSZANI', spoken: 'Én szeretnék most ezzel játszani!', icon: '🤲🎲', minta: 'Elvétel helyett szépen jelezzük a kérésünket.', imageUrl: null, audioUrl: null },
+            { id: 'g2', color: 'green', label: 'ADD KÖLCSÖN, KÉRLEK!', spoken: 'Kérlek szépen, add kölcsön egy kicsit a játékot!', icon: '🙏🧸', minta: 'Nyitott tenyérrel elkérjük a játékot.', imageUrl: null, audioUrl: null },
+            { id: 'g3', color: 'green', label: 'CSERÉLJÜNK JÁTÉKOT!', spoken: 'Cseréljünk játékot! Odaadom az enyémet.', icon: '🔄🚗', minta: 'Felajánlunk egy másik játékot cserébe.', imageUrl: null, audioUrl: null },
+            { id: 'g4', color: 'green', label: 'KÉREK SZÉPEN', spoken: 'Kérek szépen', icon: '🤲', minta: 'Alapszó kéréshez és mondatépítéshez.', imageUrl: null, audioUrl: null },
+            { id: 'g5', color: 'green', label: 'MÉG SZERETNÉK', spoken: 'Még szeretnék játszani vele!', icon: '↺✨', minta: 'Jelezzük, ha folytatni szeretnénk.', imageUrl: null, audioUrl: null },
+            { id: 'g6', color: 'green', label: 'SEGÍTS, KÉRLEK!', spoken: 'Segíts nekem, kérlek!', icon: '🆘🤝', minta: 'Sírás helyett segítséget kérünk.', imageUrl: null, audioUrl: null },
+
+            // --- PIROS / RÓZSASZÍN: TÁRSAS HATÁROK, KONFLIKTUS ÉS SORRAKERÜLÉS ---
+            { id: 'r1', color: 'red', label: 'ÁLLJ! NE VEDD EL!', spoken: 'Állj! Kérlek, ne vedd el a játékomat, most én játszom vele!', icon: '🛑✋', minta: 'Nem ütünk, felemelt tenyérrel mondjuk: Állj!', imageUrl: null, audioUrl: null },
+            { id: 'r2', color: 'red', label: 'MOST MÁR ÉN KÖVETKEZEM!', spoken: 'Most már én következem! Én jövök!', icon: '⏳👉', minta: 'Kivárjuk a sorunkat, majd jelezzük a cserét.', imageUrl: null, audioUrl: null },
+            { id: 'r3', color: 'red', label: 'NEM EZT SZERETNÉM JÁTSZANI', spoken: 'Nem ezt szeretném játszani, válasszunk másikat!', icon: '🙅‍♂️🎲', minta: 'Eldobás helyett másikat választunk.', imageUrl: null, audioUrl: null },
+            { id: 'r4', color: 'red', label: 'MOST NEM VELED JÁTSZOM', spoken: 'Ne haragudj, most nem szeretnék veled játszani.', icon: '✋🙂', minta: 'Lökdösődés nélkül jelezzük a határainkat.', imageUrl: null, audioUrl: null },
+            { id: 'r5', color: 'red', label: 'IGEN / JÓ', spoken: 'Igen!', icon: '✅😊', minta: 'Bólintás és elfogadás.', imageUrl: null, audioUrl: null },
+            { id: 'r6', color: 'red', label: 'NEM AKAROM', spoken: 'Nem, köszönöm!', icon: '❌🙂', minta: 'Békés visszautasítás.', imageUrl: null, audioUrl: null },
+            { id: 'r7', color: 'red', label: 'VÉGE / ELPAKOLOK', spoken: 'Vége a játéknak, elpakolok!', icon: '🏁📦', minta: 'A játék végén elpakolunk a helyére.', imageUrl: null, audioUrl: null },
+
+            // --- NARANCS: FŐNEVEK / ÓVODAI ÉS OTTHONI JÁTÉKOK ---
+            { id: 'o1', color: 'orange', label: 'KISAUTÓ ÉS VONAT', spoken: 'a kisautóval és a vonattal.', icon: '🚂🚗', minta: 'Főnév: Járműves szabadjáték.', imageUrl: null, audioUrl: null },
+            { id: 'o2', color: 'orange', label: 'ÉPÍTŐKOCKA / LEGO', spoken: 'az építőkockával.', icon: '🧱🏰', minta: 'Főnév: Torony- és várépítés.', imageUrl: null, audioUrl: null },
+            { id: 'o3', color: 'orange', label: 'LABDA', spoken: 'a labdával.', icon: '⚽🏀', minta: 'Főnév: Gurítás és labdázás.', imageUrl: null, audioUrl: null },
+            { id: 'o4', color: 'orange', label: 'BABA ÉS KISKONYHA', spoken: 'a babával és a kiskonyhában.', icon: '🪆🍳', minta: 'Főnév: Főzőcskézés és szerepjáték.', imageUrl: null, audioUrl: null },
+            { id: 'o5', color: 'orange', label: 'UDVAR ÉS HINTA', spoken: 'az udvaron a hintával.', icon: '🌳🎠', minta: 'Főnév: Udvari szabadidő.', imageUrl: null, audioUrl: null },
+            { id: 'o6', color: 'orange', label: 'RAJZOLÁS ÉS GYURMA', spoken: 'a ceruzával és a gyurmával.', icon: '🖍️🎨', minta: 'Főnév: Alkotás az asztalnál.', imageUrl: null, audioUrl: null },
+            { id: 'o7', color: 'orange', label: 'MESEKÖNYV ÉS ZENE', spoken: 'a mesekönyvvel és zenével.', icon: '📖🎵', minta: 'Főnév: Képeskönyv és dalok.', imageUrl: null, audioUrl: null },
+            { id: 'o8', color: 'orange', label: 'TÁRSASJÁTÉK / PUZZLE', spoken: 'a kirakóval és a társasjátékkal.', icon: '🧩🎲', minta: 'Főnév: Asztali játékok.', imageUrl: null, audioUrl: null },
+
+            // --- KÉK: ÉRZELMEK ÉS ÁLLAPOTOK ---
+            { id: 'b1', color: 'blue', label: 'ÖRÜLÖK / JÓ JÁTÉK!', spoken: 'Nagyon örülök, szuper ez a játék!', icon: '😄💛', minta: 'Érzelem: Közös öröm kifejezése.', imageUrl: null, audioUrl: null },
+            { id: 'b2', color: 'blue', label: 'MÉRGES VAGYOK', spoken: 'Most mérges vagyok, segíts megnyugodni!', icon: '😠💨', minta: 'Érzelem: Mély levegőt veszünk.', imageUrl: null, audioUrl: null },
+            { id: 'b3', color: 'blue', label: 'SZOMORÚ VAGYOK', spoken: 'Szomorú vagyok, kérek egy ölelést!', icon: '😢🫂', minta: 'Érzelem: Vigasztalás kérése.', imageUrl: null, audioUrl: null },
+            { id: 'b4', color: 'blue', label: 'ELFÁRADTAM / BABZSÁK', spoken: 'Elfáradtam, szeretnék a babzsákban pihenni!', icon: '🥱🛋️', minta: 'Állapot: Csendes pihenősarok kérése.', imageUrl: null, audioUrl: null }
+        ];
+
+        let state = {
+            pin: '1234',
+            rate: 0.95,
+            pitch: 1.0,
+            cards: JSON.parse(JSON.stringify(DEFAULT_CARDS))
+        };
+
+        let isUnlocked = false;
+        let activeTab = 'all';
+        let stripList = [];
+
+        // Modal változók
+        let editId = null;
+        let tempImg = null;
+        let tempAud = null;
+        let recorder = null;
+        let recChunks = [];
+
+        // KÉPTÖMÖRÍTŐ
+        function compressImg(file, maxW = 240, qual = 0.8) {
+            return new Promise(res => {
+                const r = new FileReader();
+                r.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const c = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > h && w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+                        else if (h >= w && h > maxW) { w = Math.round(w * maxW / h); h = maxW; }
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        res(c.toDataURL('image/jpeg', qual));
+                    };
+                    img.onerror = () => res(e.target.result);
+                    img.src = e.target.result;
+                };
+                r.readAsDataURL(file);
+            });
+        }
+
+        function blobToDataUrl(blob) {
+            return new Promise(res => {
+                const r = new FileReader();
+                r.onloadend = () => res(r.result);
+                r.readAsDataURL(blob);
+            });
+        }
+
+        // MAGYAR BESZÉDSZINTÉZIS
+        function speakHu(text) {
+            if (!('speechSynthesis' in window) || !text) return;
+            try {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'hu-HU';
+                u.rate = state.rate || 0.95;
+                u.pitch = state.pitch || 1.0;
+                const voices = window.speechSynthesis.getVoices();
+                const hu = voices.find(v => v.lang && v.lang.toLowerCase().includes('hu'));
+                if (hu) u.voice = hu;
+                window.speechSynthesis.speak(u);
+            } catch (e) {}
+        }
+
+        function playCard(card) {
+            if (!card) return;
+            if (card.audioUrl) {
+                const a = new Audio(card.audioUrl);
+                a.play().catch(() => speakHu(card.spoken || card.label));
+            } else {
+                speakHu(card.spoken || card.label);
+            }
+        }
+
+        // KÁRTYA ÉRINTÉSE
+        function tapCard(id) {
+            const c = state.cards.find(x => x.id === id);
+            if (!c) return;
+            playCard(c);
+            if (stripList.length < 7) {
+                stripList.push(c);
+                renderStrip();
+            }
+        }
+
+        function renderStrip() {
+            const box = document.getElementById('sentence-strip');
+            if (!stripList.length) {
+                box.innerHTML = `<span class="strip-empty">👆 Érintsd meg a kártyákat! (Sárga = Ki? ➔ Zöld = Mit csinál? ➔ Narancs = Mivel?)</span>`;
+                return;
+            }
+            box.innerHTML = '';
+            stripList.forEach(c => {
+                const d = document.createElement('div');
+                d.className = `strip-card word-${c.color}`;
+                const vis = c.imageUrl
+                    ? `<img src="${c.imageUrl}" class="strip-card-img">`
+                    : `<span class="strip-card-emoji">${c.icon}</span>`;
+                d.innerHTML = `${vis}<span>${c.label}</span>`;
+                box.appendChild(d);
+            });
+        }
+
+        function speakStrip() {
+            if (!stripList.length) return;
+            const hasRec = stripList.some(c => !!c.audioUrl);
+            if (!hasRec) {
+                speakHu(stripList.map(c => c.spoken || c.label).join(' '));
+            } else {
+                let d = 0;
+                stripList.forEach(c => {
+                    setTimeout(() => playCard(c), d);
+                    d += 1600;
+                });
+            }
+        }
+
+        function popStrip() { stripList.pop(); renderStrip(); }
+        function clearStrip() { stripList = []; renderStrip(); }
+
+        // FÜLEK ÉS KÁRTYARÁCS RENDERELÉSE
+        function renderTabs() {
+            const nav = document.getElementById('tabs-bar');
+            nav.innerHTML = '';
+            TABS.forEach(t => {
+                const b = document.createElement('button');
+                b.className = `tab-btn ${activeTab === t.id ? 'active' : ''}`;
+                b.onclick = () => { activeTab = t.id; renderTabs(); renderGrid(); };
+                b.innerHTML = `<span style="font-size:1.4rem;">${t.icon}</span><span>${t.name}</span>`;
+                nav.appendChild(b);
+            });
+        }
+
+        function renderGrid() {
+            const wrap = document.getElementById('grid-wrapper');
+            wrap.className = `grid-wrapper ${isUnlocked ? 'unlocked-mode' : ''}`;
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+
+            const list = state.cards.filter(c => activeTab === 'all' || c.color === activeTab);
+
+            list.forEach(c => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `aac-card word-${c.color || 'green'}`;
+                cardEl.onclick = () => tapCard(c.id);
+
+                const vis = c.imageUrl
+                    ? `<img src="${c.imageUrl}" class="card-image">`
+                    : `<span class="card-emoji">${c.icon}</span>`;
+
+                cardEl.innerHTML = `
+                    <div class="card-edit-tools" onclick="event.stopPropagation()">
+                        <button onclick="openEditModal('${c.id}')" class="tool-btn">✏️ Szerkesztés / Hang</button>
+                        <button onclick="removeCard('${c.id}')" class="tool-btn" style="background:#ffe4e6; color:#e11d48;">🗑️</button>
+                    </div>
+                    <span class="word-type-tag">${wordTypeNames[c.color] || 'Szó'}</span>
+                    <div class="card-visual">${vis}</div>
+                    <div class="card-title">${c.audioUrl ? '🎙️' : '🔊'} ${c.label}</div>
+                    <div class="card-minta">${c.minta || ''}</div>
+                `;
+                grid.appendChild(cardEl);
+            });
+        }
+
+        // FELNŐTT PIN ZÁR
+        function toggleAdminLock() {
+            if (isUnlocked) {
+                isUnlocked = false;
+                updateAdminUI();
+                renderGrid();
+            } else {
+                document.getElementById('pin-input').value = '';
+                openModal('pin-modal');
+            }
+        }
+
+        function checkPin() {
+            const p = document.getElementById('pin-input').value.trim();
+            if (p === '1234' || p === state.pin) {
+                isUnlocked = true;
+                closeModal('pin-modal');
+                updateAdminUI();
+                renderGrid();
+            } else {
+                alert('Hibás PIN! Alapértelmezett: 1234');
+            }
+        }
+
+        function updateAdminUI() {
+            const btn = document.getElementById('lock-btn');
+            const bar = document.getElementById('admin-bar');
+            if (isUnlocked) {
+                btn.classList.add('unlocked');
+                document.getElementById('lock-icon').textContent = '🔓';
+                document.getElementById('lock-label').textContent = 'Zárolás (Gyermek mód)';
+                bar.classList.add('open');
+            } else {
+                btn.classList.remove('unlocked');
+                document.getElementById('lock-icon').textContent = '🔒';
+                document.getElementById('lock-label').textContent = 'Felnőtt mód (PIN: 1234)';
+                bar.classList.remove('open');
+            }
+        }
+
+        // SZERKESZTŐ MODAL
+        function openEditModal(id) {
+            editId = id;
+            const c = id ? state.cards.find(x => x.id === id) : null;
+            document.getElementById('edit-modal-title').textContent = c ? '✏️ Kártya Szerkesztése' : '➕ Új Kártya Hozzáadása';
+            document.getElementById('f-color').value = c ? c.color : (activeTab === 'all' ? 'orange' : activeTab);
+            document.getElementById('f-label').value = c ? c.label : '';
+            document.getElementById('f-icon').value = c ? c.icon : '⭐';
+            document.getElementById('f-spoken').value = c ? c.spoken : '';
+            document.getElementById('f-minta').value = c ? (c.minta || '') : '';
+            document.getElementById('f-img').value = '';
+            tempImg = c ? c.imageUrl : null;
+            tempAud = c ? c.audioUrl : null;
+            updateAudioBtns();
+            openModal('edit-modal');
+        }
+
+        async function handleModalImage(e) {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            tempImg = await compressImg(f);
+        }
+
+        function clearModalImage() { tempImg = null; document.getElementById('f-img').value = ''; }
+
+        function testModalSpeech() {
+            const txt = document.getElementById('f-spoken').value.trim() || document.getElementById('f-label').value.trim();
+            speakHu(txt || 'Próba');
+        }
+
+        function updateAudioBtns() {
+            document.getElementById('play-rec-btn').style.display = tempAud ? 'inline-flex' : 'none';
+            document.getElementById('del-rec-btn').style.display = tempAud ? 'inline-flex' : 'none';
+        }
+
+        function toggleRecording() {
+            const b = document.getElementById('rec-btn');
+            if (recorder && recorder.state === 'recording') {
+                recorder.stop();
+                b.textContent = '🔴 Felvétel indítása';
+                return;
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                recChunks = [];
+                recorder = new MediaRecorder(stream);
+                recorder.ondataavailable = e => recChunks.push(e.data);
+                recorder.onstop = async () => {
+                    const blob = new Blob(recChunks, { type: 'audio/webm' });
+                    tempAud = await blobToDataUrl(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                    updateAudioBtns();
+                    playTempAudio();
+                };
+                recorder.start();
+                b.textContent = '⏹️ Megállítás (Beszélj!)';
+            }).catch(() => alert('Engedélyezd a mikrofont!'));
+        }
+
+        async function handleModalAudioFile(e) {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            tempAud = await blobToDataUrl(f);
+            updateAudioBtns();
+            playTempAudio();
+        }
+
+        function playTempAudio() { if (tempAud) new Audio(tempAud).play(); }
+        function clearTempAudio() { tempAud = null; updateAudioBtns(); }
+
+        function saveCard() {
+            const color = document.getElementById('f-color').value;
+            const label = document.getElementById('f-label').value.trim() || 'ÚJ KÁRTYA';
+            const icon = document.getElementById('f-icon').value.trim() || '⭐';
+            const spoken = document.getElementById('f-spoken').value.trim() || label;
+            const minta = document.getElementById('f-minta').value.trim();
+
+            if (editId) {
+                const c = state.cards.find(x => x.id === editId);
+                if (c) { c.color = color; c.label = label; c.icon = icon; c.spoken = spoken; c.minta = minta; c.imageUrl = tempImg; c.audioUrl = tempAud; }
+            } else {
+                state.cards.push({ id: 'c_' + Date.now(), color, label, icon, spoken, minta, imageUrl: tempImg, audioUrl: tempAud });
+            }
+            saveLocal();
+            renderGrid();
+            closeModal('edit-modal');
+        }
+
+        function removeCard(id) {
+            const c = state.cards.find(x => x.id === id);
+            if (!c || !confirm(`Biztosan véglegesen törlöd a(z) „${c.label}” kártyát?`)) return;
+            state.cards = state.cards.filter(x => x.id !== id);
+            saveLocal();
+            renderGrid();
+        }
+
+        async function bulkUploadImages(e) {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const col = activeTab === 'all' ? 'orange' : activeTab;
+            for (const f of files) {
+                const img = await compressImg(f);
+                const name = f.name.replace(/\.[^/.]+$/, '').toUpperCase().slice(0, 20);
+                state.cards.push({ id: 'b_' + Date.now() + Math.random(), color: col, label: name, spoken: name, icon: '🖼️', minta: 'Saját kártya', imageUrl: img, audioUrl: null });
+            }
+            saveLocal();
+            renderGrid();
+            e.target.value = '';
+        }
+
+        // GÉPI HANG BEÁLLÍTÁSA
+        function openVoiceModal() {
+            document.getElementById('v-rate').value = state.rate;
+            document.getElementById('v-pitch').value = state.pitch;
+            updateVoiceParams();
+            openModal('voice-modal');
+        }
+
+        function updateVoiceParams() {
+            state.rate = parseFloat(document.getElementById('v-rate').value) || 0.95;
+            state.pitch = parseFloat(document.getElementById('v-pitch').value) || 1.0;
+            document.getElementById('v-rate-txt').textContent = state.rate.toFixed(2);
+            document.getElementById('v-pitch-txt').textContent = state.pitch.toFixed(2);
+            saveLocal();
+        }
+
+        function setVoicePreset(r, p) {
+            document.getElementById('v-rate').value = r;
+            document.getElementById('v-pitch').value = p;
+            updateVoiceParams();
+            speakHu('Szia! Gyere, játsszunk együtt!');
+        }
+
+        // VARÁZSGOMB: TELJES KÉSZ OLDAL EXPORTÁLÁSA EGYETLEN OFFLINE HTML FÁJLBA!
+        function downloadCompleteOfflineHtml() {
+            isUnlocked = false;
+            updateAdminUI();
+            renderGrid();
+
+            let fullHtml = document.documentElement.outerHTML;
+            const stateJson = JSON.stringify(state);
+            fullHtml = fullHtml.replace(
+                /const BAKED_STATE = null;|const BAKED_STATE = \{.*?\};/s,
+                `const BAKED_STATE = ${stateJson};`
+            );
+
+            const blob = new Blob(['<!DOCTYPE html>\n' + fullHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetToDefault() {
+            if (!confirm('Biztosan visszaállítod a gyári kártyákat?')) return;
+            state.cards = JSON.parse(JSON.stringify(DEFAULT_CARDS));
+            saveLocal();
+            renderGrid();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) {
+            if (recorder && recorder.state === 'recording') recorder.stop();
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function saveLocal() {
+            try { localStorage.setItem('aak_szabadjatek_v2', JSON.stringify(state)); } catch (e) {}
+        }
+
+        function loadLocal() {
+            try {
+                const raw = localStorage.getItem('aak_szabadjatek_v2');
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (p && p.cards) { state = p; return; }
+                }
+                if (BAKED_STATE && BAKED_STATE.cards) {
+                    state = JSON.parse(JSON.stringify(BAKED_STATE));
+                }
+            } catch (e) {}
+        }
+
+        window.onload = () => {
+            loadLocal();
+            renderTabs();
+            renderGrid();
+            renderStrip();
+        };
+    </script>
+</body>
+</html>
